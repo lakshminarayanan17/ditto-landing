@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import localFont from "next/font/local";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
 
 const inter = Inter({
@@ -19,10 +20,28 @@ const cover = localFont({
   ],
 });
 
+const siteUrl = "https://joinditto.in";
+const title = "Ditto — The Ultimate Insurance Buying Experience";
+const description =
+  "Get expert guidance on Health Insurance and Term Insurance. Schedule a free call with Ditto's insurance advisors.";
+
 export const metadata: Metadata = {
-  title: "Ditto — The Ultimate Insurance Buying Experience",
-  description:
-    "Get expert guidance on Health Insurance and Term Insurance. Schedule a free call with Ditto's insurance advisors.",
+  title,
+  description,
+  metadataBase: new URL(siteUrl),
+  openGraph: {
+    title,
+    description,
+    url: siteUrl,
+    siteName: "Ditto",
+    type: "website",
+    locale: "en_IN",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+  },
 };
 
 export default function RootLayout({
@@ -32,7 +51,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${cover.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <NuqsAdapter>{children}</NuqsAdapter>
+      </body>
     </html>
   );
 }
