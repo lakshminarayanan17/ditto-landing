@@ -102,4 +102,10 @@
   html {
     @apply font-sans;
   }
+  /* Restore cursor: pointer for interactive elements — removed in Tailwind v4 Preflight.
+     iOS Safari requires this to recognise elements as tappable (webkit bug since iOS 6). */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
 }

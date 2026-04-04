@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 
 export function HeroSection() {
   return (
@@ -36,19 +35,8 @@ export function HeroSection() {
         The Ultimate Insurance Buying Experience
       </h1>
 
-      {/* Mobile CTA */}
-      <Link
-        href="#schedule"
-        className="flex items-center gap-3 rounded-xl bg-ditto-blue-dark px-8 py-4 shadow-[0px_2px_6px_0px_rgba(0,37,79,0.14)] lg:hidden"
-      >
-        <Image src="/icons/phone-calendar.svg" alt="" width={22} height={22} />
-        <span className="font-heading text-[20px] font-medium text-white">
-          Book a free call now
-        </span>
-      </Link>
-
-      {/* Hero Image */}
-      <div className="relative mt-2 w-full max-w-[343px] overflow-hidden rounded-2xl lg:max-w-[636px]">
+      {/* Hero Image — hidden on mobile, shown after the card via page layout */}
+      <div className="relative mt-2 hidden w-full max-w-[636px] overflow-hidden rounded-2xl lg:block">
         <Image
           src="/images/professional-advice.png"
           alt="Professional Advice — Which life insurance is best for me?"

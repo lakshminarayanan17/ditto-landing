@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import localFont from "next/font/local";
+import Script from "next/script";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
@@ -53,6 +54,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${cover.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
+        <Script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module" strategy="beforeInteractive" />
         <NuqsAdapter>{children}</NuqsAdapter>
         <Toaster />
       </body>

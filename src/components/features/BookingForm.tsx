@@ -118,7 +118,7 @@ export function BookingForm({
         <h3 className="relative z-10 text-[20px] font-semibold leading-tight tracking-tight text-[#33383b]">
           {insuranceLabel} Insurance Advice
         </h3>
-        <div className="relative z-10 mt-4 flex gap-8">
+        <div className="relative z-10 mt-4 flex gap-4 sm:gap-8">
           <div>
             <div className="flex items-center gap-1.5 opacity-70">
               <Image src="/icons/calendar-date.svg" alt="" width={18} height={18} className="-mt-1" />
