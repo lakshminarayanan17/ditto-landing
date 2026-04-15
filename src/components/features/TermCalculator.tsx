@@ -168,7 +168,14 @@ export function TermCalculator() {
       </div>
 
       <div className="mx-auto w-full max-w-[1300px] px-4 lg:px-[140px] lg:pt-10">
-        <h1 className="font-heading text-[18px] font-semibold tracking-tight text-[#2e2e30] lg:text-[26px]">
+        <h1 className="flex items-center gap-2 font-heading text-[18px] font-semibold tracking-tight text-[#2e2e30] lg:gap-3 lg:text-[26px]">
+          <Image
+            src="/icons/calculator.png"
+            alt=""
+            width={40}
+            height={40}
+            className="h-7 w-7 lg:h-10 lg:w-10"
+          />
           Term Insurance Premium Calculator
         </h1>
 
