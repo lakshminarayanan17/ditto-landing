@@ -1330,11 +1330,11 @@ function PlanCard({ plan }: { plan: Plan }) {
       {/* Body */}
       <div className="px-4 pb-4 pt-3">
         <p className="font-heading text-[12px] font-medium text-[#79787b]">Key offerings</p>
-        <div className="mt-2 grid grid-cols-2 gap-2">
+        <div className="mt-2 flex flex-wrap gap-2">
           {plan.offerings.map((o) => (
             <span
               key={o}
-              className="rounded-[8px] bg-[#f5f5f5] px-2.5 py-[7px] text-center font-heading text-[12px] leading-tight text-[#2e2e30]"
+              className="rounded-[8px] bg-[#f5f5f5] px-3 py-[7px] font-heading text-[12px] leading-tight text-[#2e2e30]"
             >
               {o}
             </span>
