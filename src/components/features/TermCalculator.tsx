@@ -167,7 +167,7 @@ export function TermCalculator() {
         </span>
       </div>
 
-      <div className="mx-auto w-full max-w-[1300px] px-4 lg:px-[140px] lg:pt-10">
+      <div className="mx-auto w-full max-w-[1400px] px-4 lg:px-10 lg:pt-10">
         <h1 className="font-heading text-[18px] font-semibold tracking-tight text-[#2e2e30] lg:text-[26px]">
           Term Insurance Premium Calculator
         </h1>
@@ -179,7 +179,7 @@ export function TermCalculator() {
 
         <form
           onSubmit={handleSubmit}
-          className="mt-5 hidden flex-col gap-5 lg:mt-6 lg:flex lg:flex-row lg:items-start lg:gap-10"
+          className="mt-5 hidden flex-col gap-5 lg:mt-6 lg:flex lg:flex-row lg:items-start lg:justify-center lg:gap-10"
         >
           {/* ── Left: Calculator Form ── */}
           <div className="relative w-full overflow-hidden rounded-[24px] border border-white bg-[rgba(255,255,255,0.94)] p-5 backdrop-blur-[26px] lg:w-[621px] lg:shrink-0 lg:rounded-[36px] lg:p-0">
@@ -380,7 +380,7 @@ export function TermCalculator() {
           </div>
 
           {/* ── Right: Result / Empty State ── */}
-          <div className="w-full lg:min-w-0 lg:flex-1" id="result-card">
+          <div className="w-full lg:w-[621px] lg:shrink-0" id="result-card">
             {status === "idle" && <EmptyResultCard />}
             {status === "loading" && <LoadingResultCard />}
             {status === "results" && <MultiPlanResults values={values} />}
