@@ -182,7 +182,7 @@ export function TermCalculator() {
           className="mt-5 hidden flex-col gap-5 lg:mt-6 lg:flex lg:flex-row lg:items-start lg:gap-10"
         >
           {/* ── Left: Calculator Form ── */}
-          <div className="relative w-full overflow-hidden rounded-[24px] border border-white bg-[rgba(255,255,255,0.94)] p-5 backdrop-blur-[26px] lg:w-[621px] lg:rounded-[36px] lg:p-0">
+          <div className="relative w-full overflow-hidden rounded-[24px] border border-white bg-[rgba(255,255,255,0.94)] p-5 backdrop-blur-[26px] lg:w-[621px] lg:shrink-0 lg:rounded-[36px] lg:p-0">
             <div className="lg:px-[38px] lg:pt-[30px] lg:pb-[30px]">
               {/* Orange pill */}
               <div className="inline-flex items-center gap-1.5 rounded-[10px] bg-[#fff8f3] px-2 py-1.5">
@@ -380,7 +380,7 @@ export function TermCalculator() {
           </div>
 
           {/* ── Right: Result / Empty State ── */}
-          <div className="w-full lg:flex-1" id="result-card">
+          <div className="w-full lg:min-w-0 lg:flex-1" id="result-card">
             {status === "idle" && <EmptyResultCard />}
             {status === "loading" && <LoadingResultCard />}
             {status === "results" && <MultiPlanResults values={values} />}
