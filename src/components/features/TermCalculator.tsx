@@ -168,6 +168,7 @@ export function TermCalculator() {
       </div>
 
       <div className="mx-auto w-full max-w-[1400px] px-4 lg:px-10 lg:pt-10">
+        <div className="mx-auto lg:w-[1160px]">
         <h1 className="font-heading text-[18px] font-semibold tracking-tight text-[#2e2e30] lg:text-[26px]">
           Term Insurance Premium Calculator
         </h1>
@@ -179,7 +180,7 @@ export function TermCalculator() {
 
         <form
           onSubmit={handleSubmit}
-          className="mt-5 hidden flex-col gap-5 lg:mt-6 lg:flex lg:flex-row lg:items-start lg:justify-center lg:gap-9"
+          className="mt-5 hidden flex-col gap-5 lg:mt-6 lg:flex lg:flex-row lg:items-start lg:gap-9"
         >
           {/* ── Left: Calculator Form ── */}
           <div className="relative w-full overflow-hidden rounded-[24px] border border-white bg-[rgba(255,255,255,0.94)] p-5 backdrop-blur-[26px] lg:w-[621px] lg:shrink-0 lg:rounded-[36px] lg:p-0">
@@ -195,8 +196,6 @@ export function TermCalculator() {
               <p className="mt-3.5 font-heading text-[17px] font-medium tracking-tight text-[#2e2e30] lg:mt-3.5 lg:text-[20px]">
                 Fill in details to calculate your term premium.
               </p>
-
-              <Divider className="mt-5 lg:mt-5" />
 
               {/* Gender + Age */}
               <div className="grid grid-cols-1 gap-5 pt-5 lg:grid-cols-2 lg:gap-x-[44px] lg:pt-5">
@@ -390,6 +389,7 @@ export function TermCalculator() {
         {/* Insurer-Specific Calculators (desktop only; mobile shown inside MobileCalculator) */}
         <div className="hidden lg:block">
           <InsurerSpecificSection />
+        </div>
         </div>
       </div>
     </div>
