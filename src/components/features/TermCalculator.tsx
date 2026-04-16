@@ -123,7 +123,7 @@ export function TermCalculator() {
       setTimeout(() => {
         document.getElementById("result-card")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }, 50);
-    }, 1200);
+    }, 5000);
   };
 
   // Reset on any change after submit
@@ -1137,7 +1137,7 @@ function EmptyResultCard() {
     <div className="flex min-h-[260px] w-full flex-col items-center justify-center rounded-[24px] border border-white bg-white px-6 py-10 backdrop-blur-[26px] lg:min-h-[316px] lg:rounded-[30px] lg:px-6 lg:py-[61px]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/images/calculator.gif"
+        src="/icons/calculator.png"
         alt=""
         aria-hidden
         className="h-[111px] w-[111px] object-contain lg:h-[123px] lg:w-[123px]"
@@ -1204,21 +1204,13 @@ function PremiumResultCard({ values }: { values: FormValues }) {
 function LoadingResultCard() {
   return (
     <div className="flex min-h-[260px] w-full flex-col items-center justify-center rounded-[24px] border border-white bg-white px-6 py-10 lg:min-h-[316px] lg:rounded-[30px] lg:px-6 lg:py-[61px]">
-      <div
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/images/calculator.gif"
+        alt=""
         aria-hidden
-        className="flex h-[108px] w-[108px] animate-pulse items-center justify-center rounded-[20px] bg-gradient-to-br from-[#ffeab3] to-[#ffc24e] shadow-[0_8px_20px_rgba(255,178,0,0.18)]"
-      >
-        <svg width="56" height="56" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="8" y="6" width="48" height="52" rx="6" fill="#2a2a2a" />
-          <rect x="14" y="12" width="36" height="10" rx="2" fill="#f6f6f6" />
-          <rect x="14" y="28" width="8" height="8" rx="2" fill="#444" />
-          <rect x="26" y="28" width="8" height="8" rx="2" fill="#444" />
-          <rect x="38" y="28" width="8" height="8" rx="2" fill="#ff8c1a" />
-          <rect x="14" y="40" width="8" height="8" rx="2" fill="#444" />
-          <rect x="26" y="40" width="8" height="8" rx="2" fill="#444" />
-          <rect x="38" y="40" width="8" height="8" rx="2" fill="#444" />
-        </svg>
-      </div>
+        className="h-[111px] w-[111px] object-contain lg:h-[123px] lg:w-[123px]"
+      />
       <p className="mt-6 text-center font-sans text-[16px] leading-[1.41] text-[#79787b] lg:text-[19px]">
         Calculating your Term premium...
       </p>
