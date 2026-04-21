@@ -11,7 +11,7 @@ export default function Home() {
 
       <main className="flex-1">
         <section className="mx-auto max-w-[1440px] px-4 lg:px-[160px]">
-          <div className="flex flex-col items-center gap-12 py-10 lg:flex-row lg:items-start lg:justify-between lg:gap-16 lg:py-24">
+          <div className="flex flex-col items-center gap-6 py-10 lg:flex-row lg:items-start lg:justify-between lg:gap-16 lg:py-24">
             {/* Left: Hero content */}
             <div className="flex-1">
               <HeroContent />

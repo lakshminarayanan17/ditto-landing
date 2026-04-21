@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useSquircle } from "@/hooks/useSquircle";
 import Image from "next/image";
 import { X } from "lucide-react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -53,15 +54,20 @@ interface MoreSlotsDrawerProps {
   onOpenChange: (open: boolean) => void;
   activeTab: "health" | "term";
   onScheduleSuccess?: (slot: { date: string; dayName: string; timeStart: string; timeEnd: string }) => void;
+  title?: string;
+  skipForm?: boolean;
+  prefillData?: { name: string; phone: string; email: string; note?: string };
+  onFormDataCapture?: (data: { name: string; phone: string; email: string; note?: string }) => void;
 }
 
 /* ─── Component ─── */
 
-export function MoreSlotsDrawer({ open, onOpenChange, activeTab, onScheduleSuccess }: MoreSlotsDrawerProps) {
+export function MoreSlotsDrawer({ open, onOpenChange, activeTab, onScheduleSuccess, title, skipForm, prefillData, onFormDataCapture }: MoreSlotsDrawerProps) {
   const isMobile = useIsMobile();
   const dates = getNextSixDays();
   const [selectedDateIndex, setSelectedDateIndex] = useState(0);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [mobileStep, setMobileStep] = useState<"slots" | "form">("slots");
   const squircleRef = useSquircle(44, 0.6);
 
   const selectedDate = dates[selectedDateIndex];
@@ -75,11 +81,12 @@ export function MoreSlotsDrawer({ open, onOpenChange, activeTab, onScheduleSucce
     onOpenChange(false);
     setSelectedTime(null);
     setSelectedDateIndex(0);
+    setMobileStep("slots");
     onScheduleSuccess?.(slot);
   };
 
   const dayAbbr = getDayName(selectedDate).slice(0, 3);
-  const ctaLabel = selectedTime ? `Confirm ${dayAbbr}, ${selectedTime} Call` : "Confirm Call";
+  const ctaLabel = selectedTime ? `Confirm ${dayAbbr}, ${selectedTime} Slot` : "Confirm Slot";
 
   const slotPicker = (
     <div className="flex-1 px-5 pb-6 pt-2 lg:overflow-y-auto lg:px-10 lg:py-10">
@@ -124,6 +131,9 @@ export function MoreSlotsDrawer({ open, onOpenChange, activeTab, onScheduleSucce
           selectedTimeEnd={selectedTime ? getSlotEndTime(selectedTime) : "—"}
           submitDisabled={!selectedTime}
           onSuccess={handleSuccess}
+          submitLabel={skipForm ? "Confirm Reschedule" : undefined}
+          prefillData={prefillData}
+          onFormDataCapture={onFormDataCapture}
         />
       </div>
     </>
@@ -139,66 +149,92 @@ export function MoreSlotsDrawer({ open, onOpenChange, activeTab, onScheduleSucce
   /* ─── Mobile: Vaul Bottom Sheet ─── */
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="flex h-[85vh] max-h-[85vh] flex-col bg-white p-0">
+      <Drawer open={open} onOpenChange={(o) => { if (!o) setMobileStep("slots"); onOpenChange(o); }}>
+        <DrawerContent className="flex h-auto max-h-[85vh] flex-col bg-white p-0">
           <DrawerTitle className="sr-only">Other Available Slots</DrawerTitle>
           <DrawerDescription className="sr-only">
             Pick a preferred time slot for your insurance consultation call.
           </DrawerDescription>
 
-          {/* Fixed header: title + date pills */}
-          <div className="shrink-0 bg-white px-5 pb-3 pt-5">
-            <p className="font-heading text-[18px] font-medium text-[#33383b]">Other Available Slots</p>
-            <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-              {dates.map((date, i) => (
-                <DatePill
-                  key={i}
-                  label={getDayAbbreviation(date, i === 0)}
-                  dayNumber={date.getDate()}
-                  selected={i === selectedDateIndex}
-                  onClick={() => handleDateChange(i)}
-                />
-              ))}
-            </div>
-          </div>
+          {mobileStep === "slots" ? (
+            <>
+              {/* Fixed header: title + date pills */}
+              <div className="shrink-0 bg-white px-5 pb-3 pt-5">
+                <p className="font-heading text-[18px] font-medium text-[#33383b]">{title ?? "Other Available Slots"}</p>
+                <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+                  {dates.map((date, i) => (
+                    <DatePill
+                      key={i}
+                      label={getDayAbbreviation(date, i === 0)}
+                      dayNumber={date.getDate()}
+                      selected={i === selectedDateIndex}
+                      onClick={() => handleDateChange(i)}
+                    />
+                  ))}
+                </div>
+              </div>
 
-          {/* Scrollable slot area */}
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            {slotPicker}
-          </div>
+              {/* Scrollable slot area */}
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                {slotPicker}
+              </div>
 
-          {/* Fixed CTA */}
-          <div className="shrink-0 bg-white px-5 pb-7 pt-3">
-            <p className="mb-3 text-[13px] leading-relaxed text-[#7b838c]">
-              Average call usually lasts 30 minutes.
-              <br />
-              That is enough time to get all your queries addressed.
-            </p>
-            <button
-              onClick={() => {
-                if (!selectedTime) return;
-                handleSuccess({
-                  date: formatDateDisplay(selectedDate),
-                  dayName: getDayName(selectedDate),
-                  timeStart: selectedTime,
-                  timeEnd: getSlotEndTime(selectedTime),
-                });
-              }}
-              className={`flex h-[45px] w-full items-center justify-between rounded-[12px] px-5 font-heading text-base font-medium text-white transition-colors ${
-                selectedTime
-                  ? "bg-[#0771e9] shadow-[0px_4px_12px_rgba(7,113,233,0.25)]"
-                  : "cursor-default bg-[#c8e1ff]"
-              }`}
-            >
-              <span>{ctaLabel}</span>
-              <Image
-                src="/icons/phone-calendar.svg"
-                alt=""
-                width={19}
-                height={19}
+              {/* Fixed CTA */}
+              <div className="shrink-0 bg-white px-5 pb-7 pt-3">
+                <p className="mb-3 text-[13px] leading-relaxed text-[#7b838c]">
+                  Average call usually lasts 30 minutes.
+                  <br />
+                  That is enough time to get all your queries addressed.
+                </p>
+                <button
+                  onClick={() => {
+                    if (!selectedTime) return;
+                    if (skipForm) {
+                      toast.success("Call rescheduled!", {
+                        description: `${formatDateDisplay(selectedDate)} at ${selectedTime}`,
+                      });
+                      handleSuccess({
+                        date: formatDateDisplay(selectedDate),
+                        dayName: getDayName(selectedDate),
+                        timeStart: selectedTime,
+                        timeEnd: getSlotEndTime(selectedTime),
+                      });
+                    } else {
+                      setMobileStep("form");
+                    }
+                  }}
+                  className={`flex h-[45px] w-full items-center justify-between rounded-[12px] px-5 font-heading text-base font-medium text-white transition-colors ${
+                    selectedTime
+                      ? "bg-[#0771e9] shadow-[0px_4px_12px_rgba(7,113,233,0.25)]"
+                      : "cursor-default bg-[#c8e1ff]"
+                  }`}
+                >
+                  <span>{ctaLabel}</span>
+                  <Image
+                    src="/icons/phone-calendar.svg"
+                    alt=""
+                    width={19}
+                    height={19}
+                  />
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <BookingForm
+                insuranceType={activeTab}
+                selectedDate={formatDateDisplay(selectedDate)}
+                selectedDayName={getDayName(selectedDate)}
+                selectedTimeStart={selectedTime ?? "—"}
+                selectedTimeEnd={selectedTime ? getSlotEndTime(selectedTime) : "—"}
+                showBackButton
+                onBack={() => setMobileStep("slots")}
+                onSuccess={handleSuccess}
+                prefillData={prefillData}
+                onFormDataCapture={onFormDataCapture}
               />
-            </button>
-          </div>
+            </div>
+          )}
         </DrawerContent>
       </Drawer>
     );
@@ -215,7 +251,7 @@ export function MoreSlotsDrawer({ open, onOpenChange, activeTab, onScheduleSucce
           </DialogDescription>
           <DialogHeader className="flex flex-row items-center justify-between border-b border-[#eef0f2] px-9 py-6">
             <DialogTitle className="font-heading text-[22px] font-medium tracking-tight text-[#1f2127]">
-              More Slots
+              {title ?? "More Slots"}
             </DialogTitle>
             <DialogClose
               render={
@@ -286,27 +322,26 @@ function SlotSection({
   selectedTime: string | null;
   onSelect: (time: string) => void;
 }) {
+  const availableSlots = slots.filter((slot) => !isSlotInPast(selectedDate, slot));
+  if (availableSlots.length === 0) return null;
+
   return (
     <div className="mt-4 lg:mt-6">
       <div className="flex items-center gap-1.5">
         <Image src={icon} alt="" width={18} height={18} />
-        <span className="font-heading text-[15px] text-[#6c7680]">{label}</span>
+        <span className="translate-y-[1px] font-heading text-[15px] text-[#6c7680]">{label}</span>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
-        {slots.map((slot) => {
-          const disabled = isSlotInPast(selectedDate, slot);
+        {availableSlots.map((slot) => {
           const active = selectedTime === slot;
           return (
             <button
               key={slot}
-              disabled={disabled}
               onClick={() => onSelect(slot)}
               className={`flex h-[36px] w-[76px] items-center justify-center rounded-[10px] text-[13px] transition-all lg:h-[30px] lg:w-[80px] lg:text-[13px] ${
                 active
                   ? "bg-[#1f2127] font-medium text-white"
-                  : disabled
-                    ? "cursor-not-allowed bg-[#f8f8f8] text-[#b2b2b2]"
-                    : "border border-[#e3e7ed] bg-white text-[#1f2127] shadow-[0px_1px_3px_rgba(0,0,0,0.06)] hover:bg-[#f5f5f5]"
+                  : "border border-[#e3e7ed] bg-white text-[#1f2127] shadow-[0px_1px_3px_rgba(0,0,0,0.06)] hover:bg-[#f5f5f5]"
               }`}
             >
               {slot}
