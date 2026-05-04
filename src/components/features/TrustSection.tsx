@@ -11,7 +11,8 @@ type TrustCard = {
   title: ReactNode;
   subtitle: string;
   topContent: ReactNode;
-  rotateZ: number;
+  rotate: number; // final rotation when stacked
+  offsetX: number; // final horizontal offset (px) when stacked
 };
 
 const CARDS: TrustCard[] = [
@@ -19,7 +20,8 @@ const CARDS: TrustCard[] = [
     key: "google",
     title: "Google Ratings",
     subtitle: "Top Rated with 12,000 reviews",
-    rotateZ: -4,
+    rotate: -6,
+    offsetX: -50,
     topContent: (
       <div className="flex items-center gap-2">
         <Image src="/icons/rating-4-9.svg" alt="4.9" width={86} height={48} />
@@ -31,7 +33,8 @@ const CARDS: TrustCard[] = [
     key: "zerodha",
     title: "Backed by Zerodha",
     subtitle: "Backed by Nithin Kamath",
-    rotateZ: 3,
+    rotate: 0,
+    offsetX: 0,
     topContent: (
       <Image
         src="/icons/zerodha-logo.svg"
@@ -51,7 +54,8 @@ const CARDS: TrustCard[] = [
       </>
     ),
     subtitle: "Two-time LinkedIn Top Startup",
-    rotateZ: 0,
+    rotate: 6,
+    offsetX: 50,
     topContent: <LinkedInIcon />,
   },
 ];
@@ -92,16 +96,8 @@ function WhatsAppIcon({ className }: { className?: string }) {
   );
 }
 
-// Pieterkoopt's mwg_effect031 (lifted from their bundle):
-//   pin content-wrapper, scrub for 1 viewport, animate inner content:
-//   { rotationZ: random ±5, scale: 0.7, rotationX: 40, ease: "power1.in" }
-//   then autoAlpha → 0 as the slide scrolls past.
-// The stacking visual happens because the next slide (later in DOM, higher
-// z-index) scrolls up over the previous pinned card while it tilts away.
-//
-// Translation: ONE sticky "stage". All cards absolute-positioned at the same
-// spot inside the stage, stacked by z-index = card index. Single shared
-// scroll progress drives each card's enter (from below) and exit (tilt back).
+// Simple 2D scroll-stack: each card rises from below into a layered stack,
+// rotating into its final tilt. All three cards stay visible at the end.
 function StackCard({
   card,
   index,
@@ -114,56 +110,27 @@ function StackCard({
   progress: MotionValue<number>;
 }) {
   const isFirst = index === 0;
-  const isLast = index === total - 1;
-  const phase = 1 / total;
 
-  // Card N is in front during [N/total, (N+1)/total].
-  // It enters slightly before its phase starts (slides up from below + fades in),
-  // and exits at the start of card N+1's phase (tilts back, fades out).
-  const enterStart = isFirst ? 0 : index * phase - 0.08;
-  const enterEnd = isFirst ? 0.001 : index * phase + 0.02;
-  const exitStart = isLast ? 0.999 : (index + 1) * phase - 0.05;
-  const exitEnd = isLast ? 1 : (index + 1) * phase + 0.12;
+  // Each card claims one "phase" of scroll. It enters during the back half
+  // of the previous phase, ending in its final tilted position.
+  const phaseStart = isFirst ? 0 : (index - 0.5) / total;
+  const phaseEnd = isFirst ? 0.0001 : index / total;
 
-  const opacity = useTransform(
-    progress,
-    [enterStart, enterEnd, exitStart, exitEnd],
-    [isFirst ? 1 : 0, 1, 1, isLast ? 1 : 0]
-  );
-  const y = useTransform(
-    progress,
-    [enterStart, enterEnd],
-    [isFirst ? 0 : 120, 0]
-  );
-  const rotateX = useTransform(
-    progress,
-    [exitStart, exitEnd],
-    [0, isLast ? 0 : 40]
-  );
-  const rotateZ = useTransform(
-    progress,
-    [exitStart, exitEnd],
-    [0, isLast ? 0 : card.rotateZ]
-  );
-  const scale = useTransform(
-    progress,
-    [exitStart, exitEnd],
-    [1, isLast ? 1 : 0.7]
-  );
+  const y = useTransform(progress, [phaseStart, phaseEnd], [isFirst ? 0 : 380, 0]);
+  const x = useTransform(progress, [phaseStart, phaseEnd], [0, card.offsetX]);
+  const rotate = useTransform(progress, [phaseStart, phaseEnd], [0, card.rotate]);
+  const opacity = useTransform(progress, [phaseStart, phaseEnd], [isFirst ? 1 : 0, 1]);
 
   return (
     <motion.div
       style={{
-        opacity,
+        x,
         y,
-        rotateX,
-        rotateZ,
-        scale,
+        rotate,
+        opacity,
         zIndex: index + 1,
-        transformStyle: "preserve-3d",
-        transformOrigin: "center top",
       }}
-      className="absolute left-1/2 top-0 h-[337px] w-full max-w-[420px] -translate-x-1/2 overflow-hidden rounded-[28px] border border-[#f1f1f1] bg-white p-8 shadow-[0_1px_60px_rgba(0,0,0,0.06)]"
+      className="absolute left-1/2 top-0 h-[337px] w-full max-w-[420px] -translate-x-1/2 overflow-hidden rounded-[28px] border border-[#f1f1f1] bg-white p-8 shadow-[0_8px_40px_rgba(0,0,0,0.08)]"
     >
       <div className="mb-8 flex h-[68px] items-center">{card.topContent}</div>
       <h3 className="mb-6 font-heading text-[28px] font-medium leading-[1.16] tracking-[0.01em] text-[#535353] lg:text-[35px]">
@@ -184,10 +151,7 @@ export function TrustSection() {
   });
 
   return (
-    <section
-      className="relative bg-ditto-grey-100 pt-12 lg:pt-20"
-      style={{ perspective: "1500px" }}
-    >
+    <section className="relative bg-ditto-grey-100 pt-12 lg:pt-20">
       <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-8 px-4 lg:grid-cols-[1fr_1.05fr] lg:gap-16 lg:px-[160px]">
         <div className="self-start lg:sticky lg:top-32 lg:pt-10">
           <h2 className="mb-4 font-heading text-[36px] font-medium leading-[1.18] tracking-[0.02em] text-[#0e3b6b] lg:text-[50px]">
@@ -218,10 +182,9 @@ export function TrustSection() {
           </div>
         </div>
 
-        {/* Cards column: tall scroll container with one sticky stage. All
-            cards are layered on top of each other inside the stage. */}
-        <div ref={cardsRef} className="relative h-[300vh]">
-          <div className="sticky top-32 h-[400px]">
+        {/* Cards column: tall scroll container, sticky stage, layered cards. */}
+        <div ref={cardsRef} className="relative h-[220vh]">
+          <div className="sticky top-32 h-[440px]">
             <div className="relative h-full">
               {CARDS.map((c, i) => (
                 <StackCard
