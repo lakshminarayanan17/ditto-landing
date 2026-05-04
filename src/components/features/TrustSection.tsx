@@ -31,7 +31,7 @@ const CARDS: TrustCard[] = [
     title: "Google Ratings",
     subtitle: "Top Rated with 12,000 reviews",
     finalRotate: -10,
-    finalX: -90,
+    finalX: -80,
     finalY: -28,
     finalScale: 0.93,
     topContent: (
@@ -46,7 +46,7 @@ const CARDS: TrustCard[] = [
     title: "Backed by Zerodha",
     subtitle: "Backed by Nithin Kamath",
     finalRotate: -4,
-    finalX: -45,
+    finalX: -40,
     finalY: -14,
     finalScale: 0.96,
     topContent: (
@@ -139,11 +139,13 @@ function StackCard({
   const settleStart = isLast ? enterEnd + 0.05 : (index + 1) * slot;
   const settleEnd = isLast ? settleStart + 0.1 : settleStart + 0.15;
 
-  // Y: rises from below to centered, then nudges to its final stacked y
+  // Y: rises from below the stage, then settles into its final stacked y.
+  // 500 puts the card fully below the visible stage area (cards live at
+  // top-[80px] inside an h-[540px] stage, so 80+500=580 > 540 → clipped).
   const y = useTransform(
     progress,
     [enterStart, enterEnd, settleStart, settleEnd],
-    [520, 0, 0, card.finalY]
+    [500, 0, 0, card.finalY]
   );
   const x = useTransform(
     progress,
@@ -170,7 +172,7 @@ function StackCard({
         scale,
         zIndex: index + 1,
       }}
-      className="absolute left-1/2 top-0 h-[337px] w-full max-w-[420px] -translate-x-1/2 overflow-hidden rounded-[28px] border border-[#f1f1f1] bg-white p-8 shadow-[0_8px_40px_rgba(0,0,0,0.08)]"
+      className="absolute left-1/2 top-[80px] h-[337px] w-full max-w-[420px] -translate-x-1/2 overflow-hidden rounded-[28px] border border-[#f1f1f1] bg-white p-8 shadow-[0_8px_40px_rgba(0,0,0,0.08)]"
     >
       <div className="mb-8 flex h-[68px] items-center">{card.topContent}</div>
       <h3 className="mb-6 font-heading text-[28px] font-medium leading-[1.16] tracking-[0.01em] text-[#535353] lg:text-[35px]">
@@ -231,22 +233,20 @@ export function TrustSection() {
         </div>
 
         {/* Cards column: tall scroll container with one sticky stage.
-            On lg the stage extends sideways via negative margin so the
-            leftward-fanning cards have room and don't clip at the column
-            edge. overflow-hidden still clips the rising cards from below. */}
+            Stage is 540px tall and extended via lg:-mx-16 so rotated cards
+            have horizontal headroom. Cards sit at top-[80px] internally so
+            rotated top corners aren't clipped by overflow-hidden. */}
         <div ref={cardsRef} className="relative h-[200vh]">
-          <div className="sticky top-32 h-[480px] overflow-hidden lg:-mx-12">
-            <div className="relative h-full pt-8">
-              {CARDS.map((c, i) => (
-                <StackCard
-                  key={c.key}
-                  card={c}
-                  index={i}
-                  total={CARDS.length}
-                  progress={smooth}
-                />
-              ))}
-            </div>
+          <div className="sticky top-32 h-[540px] overflow-hidden lg:-mx-16">
+            {CARDS.map((c, i) => (
+              <StackCard
+                key={c.key}
+                card={c}
+                index={i}
+                total={CARDS.length}
+                progress={smooth}
+              />
+            ))}
           </div>
         </div>
       </div>
