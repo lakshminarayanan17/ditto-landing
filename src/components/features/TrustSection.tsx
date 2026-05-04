@@ -11,7 +11,6 @@ type TrustCard = {
   title: ReactNode;
   subtitle: string;
   topContent: ReactNode;
-  rotate: number;
 };
 
 const CARDS: TrustCard[] = [
@@ -19,7 +18,6 @@ const CARDS: TrustCard[] = [
     key: "google",
     title: "Google Ratings",
     subtitle: "Top Rated with 12,000 reviews",
-    rotate: -3,
     topContent: (
       <div className="flex items-center gap-2">
         <Image src="/icons/rating-4-9.svg" alt="4.9" width={86} height={48} />
@@ -31,7 +29,6 @@ const CARDS: TrustCard[] = [
     key: "zerodha",
     title: "Backed by Zerodha",
     subtitle: "Backed by Nithin Kamath",
-    rotate: 0,
     topContent: (
       <Image
         src="/icons/zerodha-logo.svg"
@@ -51,7 +48,6 @@ const CARDS: TrustCard[] = [
       </>
     ),
     subtitle: "Two-time LinkedIn Top Startup",
-    rotate: 4,
     topContent: <LinkedInIcon />,
   },
 ];
@@ -103,28 +99,21 @@ function StackCard({
   total: number;
   progress: MotionValue<number>;
 }) {
-  const start = index / total;
-  const end = (index + 1) / total;
-  const targetScale = 1 - (total - 1 - index) * 0.05;
-  const scale = useTransform(progress, [start, end], [1, targetScale]);
-  const rotateOnEnter = useTransform(
-    progress,
-    [Math.max(0, start - 0.15), start],
-    [card.rotate, 0]
-  );
+  // Pieterkoopt-style clean stack: each earlier card scales down by 0.05
+  // per card layered on top, and sits a few px lower so it peeks out at top.
+  const cardsAbove = total - 1 - index;
+  const targetScale = 1 - cardsAbove * 0.05;
+  const start = (index + 1) / total;
+  const scale = useTransform(progress, [start, 1], [1, targetScale]);
 
   return (
     <div
-      className="sticky flex h-[80vh] items-start justify-center lg:h-[90vh]"
-      style={{ top: `calc(7rem + ${index * 1.25}rem)` }}
+      className="sticky flex h-[85vh] items-start justify-center lg:h-[90vh]"
+      style={{ top: `calc(7rem + ${index * 14}px)` }}
     >
       <motion.div
-        style={{
-          scale,
-          rotate: rotateOnEnter,
-          transformOrigin: "top center",
-        }}
-        className="relative w-full max-w-[401px] overflow-hidden rounded-[28px] border border-[#f1f1f1] bg-white p-8 shadow-[0_1px_60px_rgba(0,0,0,0.06)] lg:h-[337px]"
+        style={{ scale, transformOrigin: "top center" }}
+        className="relative w-full max-w-[420px] overflow-hidden rounded-[28px] border border-[#f1f1f1] bg-white p-8 shadow-[0_1px_60px_rgba(0,0,0,0.06)] lg:h-[337px]"
       >
         <div className="mb-8 flex h-[68px] items-center">{card.topContent}</div>
         <h3 className="mb-6 font-heading text-[28px] font-medium leading-[1.16] tracking-[0.01em] text-[#535353] lg:text-[35px]">
