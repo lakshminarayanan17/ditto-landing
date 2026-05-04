@@ -112,14 +112,14 @@ function WhatsAppIcon({ className }: { className?: string }) {
   );
 }
 
-// Each card runs two phases on the shared (spring-smoothed) progress:
-//   ENTER  — slides up from below into the centered front position.
-//   SETTLE — once the next card has arrived, this card moves into its final
-//            stacked position (rotate + offset + scale). No fade.
-// Phase boundaries (3 cards):
-//   card 0:  enter [0, .15]    settle [.30, .45]
-//   card 1:  enter [.30, .45]  settle [.60, .75]
-//   card 2:  enter [.60, .75]  settle [.80, .90]   (front, slight right tilt)
+// Each card runs two phases on the shared (spring-smoothed) progress, with
+// explicit HOLD windows in between so the next card doesn't appear until the
+// current one has had time to be read.
+//
+// Phase boundaries (3 cards, slot = 0.30):
+//   card 0:  enter [.00, .08]   hold .08–.32   settle [.32, .42]
+//   card 1:  enter [.32, .42]   hold .42–.62   settle [.62, .72]
+//   card 2:  enter [.62, .72]   hold .72–.85   tilt   [.85, .95]
 function StackCard({
   card,
   index,
@@ -131,13 +131,19 @@ function StackCard({
   total: number;
   progress: MotionValue<number>;
 }) {
+  const isFirst = index === 0;
   const isLast = index === total - 1;
-  const slot = 0.3; // each card's pin slot inside the scroll progress
+  const slot = 0.30;
 
-  const enterStart = index * slot;
-  const enterEnd = enterStart + 0.15;
-  const settleStart = isLast ? enterEnd + 0.05 : (index + 1) * slot;
-  const settleEnd = isLast ? settleStart + 0.1 : settleStart + 0.15;
+  // Enter: card rises from below into the centered front position.
+  const enterStart = isFirst ? 0 : index * slot + 0.02;
+  const enterEnd = enterStart + 0.10;
+
+  // Settle: when the next card lands, this card moves to its stacked spot.
+  // Last card has no successor — it tilts into its own resting angle after
+  // a deliberate hold so the front card has time to be read.
+  const settleStart = isLast ? enterEnd + 0.13 : (index + 1) * slot + 0.02;
+  const settleEnd = settleStart + 0.10;
 
   // Y: rises from below the stage, then settles into its final stacked y.
   // 500 puts the card fully below the visible stage area (cards live at
@@ -192,11 +198,13 @@ export function TrustSection() {
     offset: ["start start", "end end"],
   });
 
-  // Spring-smoothed scroll progress so the stack glides instead of snapping
-  // to scroll position. Light damping for a soft, settled feel.
+  // Spring-smoothed scroll progress so the stack glides instead of tracking
+  // raw scroll. Lower stiffness + higher damping = a slower, settled glide
+  // (overdamped, no bounce) — the cards feel like they're easing into place
+  // rather than snapping with the wheel.
   const smooth = useSpring(scrollYProgress, {
-    damping: 28,
-    stiffness: 90,
+    damping: 40,
+    stiffness: 55,
     restDelta: 0.001,
   });
 
@@ -236,7 +244,7 @@ export function TrustSection() {
             Stage is 540px tall and extended via lg:-mx-16 so rotated cards
             have horizontal headroom. Cards sit at top-[80px] internally so
             rotated top corners aren't clipped by overflow-hidden. */}
-        <div ref={cardsRef} className="relative h-[200vh]">
+        <div ref={cardsRef} className="relative h-[280vh]">
           <div className="sticky top-32 h-[540px] overflow-hidden lg:-mx-16">
             {CARDS.map((c, i) => (
               <StackCard
