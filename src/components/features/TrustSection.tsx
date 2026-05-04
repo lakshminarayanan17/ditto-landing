@@ -137,10 +137,12 @@ function StackCard({
   const recedeStart = isLast ? 0.999 : (index + 1) * phase - phase * 0.5;
   const recedeEnd = isLast ? 1 : (index + 1) * phase;
 
+  // No opacity animation — cards stay fully visible. The rising cards are
+  // clipped by overflow-hidden on the stage until they reach the stack.
   const y = useTransform(
     progress,
     [enterStart, enterEnd, recedeStart, recedeEnd],
-    [isFirst ? 0 : 360, 0, 0, isLast ? 0 : card.recedeY]
+    [isFirst ? 0 : 520, 0, 0, isLast ? 0 : card.recedeY]
   );
   const x = useTransform(
     progress,
@@ -157,11 +159,6 @@ function StackCard({
     [recedeStart, recedeEnd],
     [1, isLast ? 1 : card.recedeScale]
   );
-  const opacity = useTransform(
-    progress,
-    [enterStart, enterEnd],
-    [isFirst ? 1 : 0, 1]
-  );
 
   return (
     <motion.div
@@ -170,7 +167,6 @@ function StackCard({
         y,
         rotate,
         scale,
-        opacity,
         zIndex: index + 1,
       }}
       className="absolute left-1/2 top-0 h-[337px] w-full max-w-[420px] -translate-x-1/2 overflow-hidden rounded-[28px] border border-[#f1f1f1] bg-white p-8 shadow-[0_8px_40px_rgba(0,0,0,0.08)]"
@@ -225,10 +221,11 @@ export function TrustSection() {
           </div>
         </div>
 
-        {/* Cards column: tall scroll container with one sticky stage. */}
+        {/* Cards column: tall scroll container with one sticky stage.
+            overflow-hidden clips the rising cards until they reach the stack. */}
         <div ref={cardsRef} className="relative h-[220vh]">
-          <div className="sticky top-32 h-[440px]">
-            <div className="relative h-full">
+          <div className="sticky top-32 h-[480px] overflow-hidden">
+            <div className="relative h-full pt-6">
               {CARDS.map((c, i) => (
                 <StackCard
                   key={c.key}
