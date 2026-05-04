@@ -11,8 +11,11 @@ type TrustCard = {
   title: ReactNode;
   subtitle: string;
   topContent: ReactNode;
-  rotate: number; // final rotation when stacked
-  offsetX: number; // final horizontal offset (px) when stacked
+  // Where this card sits when it has been pushed BEHIND a newer card.
+  recedeRotate: number;
+  recedeX: number;
+  recedeY: number;
+  recedeScale: number;
 };
 
 const CARDS: TrustCard[] = [
@@ -20,8 +23,10 @@ const CARDS: TrustCard[] = [
     key: "google",
     title: "Google Ratings",
     subtitle: "Top Rated with 12,000 reviews",
-    rotate: -6,
-    offsetX: -50,
+    recedeRotate: -8,
+    recedeX: -28,
+    recedeY: -22,
+    recedeScale: 0.88,
     topContent: (
       <div className="flex items-center gap-2">
         <Image src="/icons/rating-4-9.svg" alt="4.9" width={86} height={48} />
@@ -33,8 +38,10 @@ const CARDS: TrustCard[] = [
     key: "zerodha",
     title: "Backed by Zerodha",
     subtitle: "Backed by Nithin Kamath",
-    rotate: 0,
-    offsetX: 0,
+    recedeRotate: 5,
+    recedeX: 18,
+    recedeY: -12,
+    recedeScale: 0.94,
     topContent: (
       <Image
         src="/icons/zerodha-logo.svg"
@@ -54,8 +61,11 @@ const CARDS: TrustCard[] = [
       </>
     ),
     subtitle: "Two-time LinkedIn Top Startup",
-    rotate: 6,
-    offsetX: 50,
+    // Last card stays in front — these values are unused but typed for shape.
+    recedeRotate: 0,
+    recedeX: 0,
+    recedeY: 0,
+    recedeScale: 1,
     topContent: <LinkedInIcon />,
   },
 ];
@@ -96,8 +106,13 @@ function WhatsAppIcon({ className }: { className?: string }) {
   );
 }
 
-// Simple 2D scroll-stack: each card rises from below into a layered stack,
-// rotating into its final tilt. All three cards stay visible at the end.
+// Two-phase animation per card on a single shared scroll progress:
+//   1. ENTER  — slides up from below into the centered front position.
+//   2. RECEDE — when the next card starts entering, this card gets pushed
+//               back: rotates to its tilt, shifts x/y, scales down. It does
+//               NOT fade out — it stays visible, peeking from behind.
+// At progress=1 the result is a fanned deck: card 2 in front straight,
+// card 1 behind it tilted right, card 0 farther back tilted left.
 function StackCard({
   card,
   index,
@@ -110,16 +125,43 @@ function StackCard({
   progress: MotionValue<number>;
 }) {
   const isFirst = index === 0;
+  const isLast = index === total - 1;
 
-  // Each card claims one "phase" of scroll. It enters during the back half
-  // of the previous phase, ending in its final tilted position.
-  const phaseStart = isFirst ? 0 : (index - 0.5) / total;
-  const phaseEnd = isFirst ? 0.0001 : index / total;
+  const phase = 1 / total;
+  // Card N's "active" window is roughly [N/total, (N+1)/total].
+  // Enter ramp lives in the back half of the previous phase; recede ramp
+  // lives in the back half of this card's own phase (i.e. the front half
+  // of the next card's enter ramp, so the handoff overlaps).
+  const enterStart = isFirst ? 0 : index * phase - phase * 0.5;
+  const enterEnd = isFirst ? 0.0001 : index * phase;
+  const recedeStart = isLast ? 0.999 : (index + 1) * phase - phase * 0.5;
+  const recedeEnd = isLast ? 1 : (index + 1) * phase;
 
-  const y = useTransform(progress, [phaseStart, phaseEnd], [isFirst ? 0 : 380, 0]);
-  const x = useTransform(progress, [phaseStart, phaseEnd], [0, card.offsetX]);
-  const rotate = useTransform(progress, [phaseStart, phaseEnd], [0, card.rotate]);
-  const opacity = useTransform(progress, [phaseStart, phaseEnd], [isFirst ? 1 : 0, 1]);
+  const y = useTransform(
+    progress,
+    [enterStart, enterEnd, recedeStart, recedeEnd],
+    [isFirst ? 0 : 360, 0, 0, isLast ? 0 : card.recedeY]
+  );
+  const x = useTransform(
+    progress,
+    [enterStart, enterEnd, recedeStart, recedeEnd],
+    [0, 0, 0, isLast ? 0 : card.recedeX]
+  );
+  const rotate = useTransform(
+    progress,
+    [recedeStart, recedeEnd],
+    [0, isLast ? 0 : card.recedeRotate]
+  );
+  const scale = useTransform(
+    progress,
+    [recedeStart, recedeEnd],
+    [1, isLast ? 1 : card.recedeScale]
+  );
+  const opacity = useTransform(
+    progress,
+    [enterStart, enterEnd],
+    [isFirst ? 1 : 0, 1]
+  );
 
   return (
     <motion.div
@@ -127,6 +169,7 @@ function StackCard({
         x,
         y,
         rotate,
+        scale,
         opacity,
         zIndex: index + 1,
       }}
@@ -182,7 +225,7 @@ export function TrustSection() {
           </div>
         </div>
 
-        {/* Cards column: tall scroll container, sticky stage, layered cards. */}
+        {/* Cards column: tall scroll container with one sticky stage. */}
         <div ref={cardsRef} className="relative h-[220vh]">
           <div className="sticky top-32 h-[440px]">
             <div className="relative h-full">
