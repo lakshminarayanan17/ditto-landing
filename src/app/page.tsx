@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Navbar } from "@/components/layout/Navbar";
 import { HeroContent } from "@/components/features/HeroContent";
 import { SchedulingCard } from "@/components/features/SchedulingCard";
+import { TrustSection } from "@/components/features/TrustSection";
 
 export default function Home() {
   return (
@@ -37,6 +38,8 @@ export default function Home() {
             />
           </div>
         </section>
+
+        <TrustSection />
       </main>
     </div>
   );
