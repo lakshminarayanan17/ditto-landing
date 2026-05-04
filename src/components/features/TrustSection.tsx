@@ -3,7 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRef, type ReactNode } from "react";
-import { motion, useScroll, useTransform, type MotionValue } from "motion/react";
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useSpring,
+  type MotionValue,
+} from "motion/react";
 import { Calendar } from "lucide-react";
 
 type TrustCard = {
@@ -11,11 +17,12 @@ type TrustCard = {
   title: ReactNode;
   subtitle: string;
   topContent: ReactNode;
-  // Where this card sits when it has been pushed BEHIND a newer card.
-  recedeRotate: number;
-  recedeX: number;
-  recedeY: number;
-  recedeScale: number;
+  // Final stacked position — matches the pieterkoopt reference fan:
+  // back card tilts strongly left, middle slightly left, front slight right.
+  finalRotate: number;
+  finalX: number;
+  finalY: number;
+  finalScale: number;
 };
 
 const CARDS: TrustCard[] = [
@@ -23,10 +30,10 @@ const CARDS: TrustCard[] = [
     key: "google",
     title: "Google Ratings",
     subtitle: "Top Rated with 12,000 reviews",
-    recedeRotate: -8,
-    recedeX: -28,
-    recedeY: -22,
-    recedeScale: 0.88,
+    finalRotate: -10,
+    finalX: -110,
+    finalY: -28,
+    finalScale: 0.93,
     topContent: (
       <div className="flex items-center gap-2">
         <Image src="/icons/rating-4-9.svg" alt="4.9" width={86} height={48} />
@@ -38,10 +45,10 @@ const CARDS: TrustCard[] = [
     key: "zerodha",
     title: "Backed by Zerodha",
     subtitle: "Backed by Nithin Kamath",
-    recedeRotate: 5,
-    recedeX: 18,
-    recedeY: -12,
-    recedeScale: 0.94,
+    finalRotate: -4,
+    finalX: -55,
+    finalY: -14,
+    finalScale: 0.96,
     topContent: (
       <Image
         src="/icons/zerodha-logo.svg"
@@ -61,11 +68,10 @@ const CARDS: TrustCard[] = [
       </>
     ),
     subtitle: "Two-time LinkedIn Top Startup",
-    // Last card stays in front — these values are unused but typed for shape.
-    recedeRotate: 0,
-    recedeX: 0,
-    recedeY: 0,
-    recedeScale: 1,
+    finalRotate: 4,
+    finalX: 0,
+    finalY: 0,
+    finalScale: 1,
     topContent: <LinkedInIcon />,
   },
 ];
@@ -106,13 +112,14 @@ function WhatsAppIcon({ className }: { className?: string }) {
   );
 }
 
-// Two-phase animation per card on a single shared scroll progress:
-//   1. ENTER  — slides up from below into the centered front position.
-//   2. RECEDE — when the next card starts entering, this card gets pushed
-//               back: rotates to its tilt, shifts x/y, scales down. It does
-//               NOT fade out — it stays visible, peeking from behind.
-// At progress=1 the result is a fanned deck: card 2 in front straight,
-// card 1 behind it tilted right, card 0 farther back tilted left.
+// Each card runs two phases on the shared (spring-smoothed) progress:
+//   ENTER  — slides up from below into the centered front position.
+//   SETTLE — once the next card has arrived, this card moves into its final
+//            stacked position (rotate + offset + scale). No fade.
+// Phase boundaries (3 cards):
+//   card 0:  enter [0, .15]    settle [.30, .45]
+//   card 1:  enter [.30, .45]  settle [.60, .75]
+//   card 2:  enter [.60, .75]  settle [.80, .90]   (front, slight right tilt)
 function StackCard({
   card,
   index,
@@ -124,40 +131,34 @@ function StackCard({
   total: number;
   progress: MotionValue<number>;
 }) {
-  const isFirst = index === 0;
   const isLast = index === total - 1;
+  const slot = 0.3; // each card's pin slot inside the scroll progress
 
-  const phase = 1 / total;
-  // Card N's "active" window is roughly [N/total, (N+1)/total].
-  // Enter ramp lives in the back half of the previous phase; recede ramp
-  // lives in the back half of this card's own phase (i.e. the front half
-  // of the next card's enter ramp, so the handoff overlaps).
-  const enterStart = isFirst ? 0 : index * phase - phase * 0.5;
-  const enterEnd = isFirst ? 0.0001 : index * phase;
-  const recedeStart = isLast ? 0.999 : (index + 1) * phase - phase * 0.5;
-  const recedeEnd = isLast ? 1 : (index + 1) * phase;
+  const enterStart = index * slot;
+  const enterEnd = enterStart + 0.15;
+  const settleStart = isLast ? enterEnd + 0.05 : (index + 1) * slot;
+  const settleEnd = isLast ? settleStart + 0.1 : settleStart + 0.15;
 
-  // No opacity animation — cards stay fully visible. The rising cards are
-  // clipped by overflow-hidden on the stage until they reach the stack.
+  // Y: rises from below to centered, then nudges to its final stacked y
   const y = useTransform(
     progress,
-    [enterStart, enterEnd, recedeStart, recedeEnd],
-    [isFirst ? 0 : 520, 0, 0, isLast ? 0 : card.recedeY]
+    [enterStart, enterEnd, settleStart, settleEnd],
+    [520, 0, 0, card.finalY]
   );
   const x = useTransform(
     progress,
-    [enterStart, enterEnd, recedeStart, recedeEnd],
-    [0, 0, 0, isLast ? 0 : card.recedeX]
+    [settleStart, settleEnd],
+    [0, card.finalX]
   );
   const rotate = useTransform(
     progress,
-    [recedeStart, recedeEnd],
-    [0, isLast ? 0 : card.recedeRotate]
+    [settleStart, settleEnd],
+    [0, card.finalRotate]
   );
   const scale = useTransform(
     progress,
-    [recedeStart, recedeEnd],
-    [1, isLast ? 1 : card.recedeScale]
+    [settleStart, settleEnd],
+    [1, card.finalScale]
   );
 
   return (
@@ -187,6 +188,14 @@ export function TrustSection() {
   const { scrollYProgress } = useScroll({
     target: cardsRef,
     offset: ["start start", "end end"],
+  });
+
+  // Spring-smoothed scroll progress so the stack glides instead of snapping
+  // to scroll position. Light damping for a soft, settled feel.
+  const smooth = useSpring(scrollYProgress, {
+    damping: 28,
+    stiffness: 90,
+    restDelta: 0.001,
   });
 
   return (
@@ -223,16 +232,16 @@ export function TrustSection() {
 
         {/* Cards column: tall scroll container with one sticky stage.
             overflow-hidden clips the rising cards until they reach the stack. */}
-        <div ref={cardsRef} className="relative h-[220vh]">
+        <div ref={cardsRef} className="relative h-[200vh]">
           <div className="sticky top-32 h-[480px] overflow-hidden">
-            <div className="relative h-full pt-6">
+            <div className="relative h-full pt-8">
               {CARDS.map((c, i) => (
                 <StackCard
                   key={c.key}
                   card={c}
                   index={i}
                   total={CARDS.length}
-                  progress={scrollYProgress}
+                  progress={smooth}
                 />
               ))}
             </div>
