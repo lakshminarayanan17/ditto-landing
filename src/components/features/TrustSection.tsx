@@ -31,7 +31,7 @@ const CARDS: TrustCard[] = [
     title: "Google Ratings",
     subtitle: "Top Rated with 12,000 reviews",
     finalRotate: -10,
-    finalX: -110,
+    finalX: -90,
     finalY: -28,
     finalScale: 0.93,
     topContent: (
@@ -46,7 +46,7 @@ const CARDS: TrustCard[] = [
     title: "Backed by Zerodha",
     subtitle: "Backed by Nithin Kamath",
     finalRotate: -4,
-    finalX: -55,
+    finalX: -45,
     finalY: -14,
     finalScale: 0.96,
     topContent: (
@@ -231,9 +231,11 @@ export function TrustSection() {
         </div>
 
         {/* Cards column: tall scroll container with one sticky stage.
-            overflow-hidden clips the rising cards until they reach the stack. */}
+            On lg the stage extends sideways via negative margin so the
+            leftward-fanning cards have room and don't clip at the column
+            edge. overflow-hidden still clips the rising cards from below. */}
         <div ref={cardsRef} className="relative h-[200vh]">
-          <div className="sticky top-32 h-[480px] overflow-hidden">
+          <div className="sticky top-32 h-[480px] overflow-hidden lg:-mx-12">
             <div className="relative h-full pt-8">
               {CARDS.map((c, i) => (
                 <StackCard
